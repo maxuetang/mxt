@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>填空题</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1,maximun-scale=1,user-scalable=no" />
+<meta name="author" content="www.jiudingcheng.com 贵州九鼎成科技有限公司"/>
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7; IE=EmulateIE9" />
+<link href="https://libs.jiudingcheng.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://libs.jiudingcheng.com/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://libs.jiudingcheng.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<!--[if lt IE 9]>
+<script src="https://libs.jiudingcheng.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="https://libs.jiudingcheng.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+<link rel="stylesheet" href="https://www.maxuetang.cn/lxojres/mxt-editor/css/mxt-editor.min.css?v=20190117"/>
+<script type="text/javascript" src="https://www.maxuetang.cn/lxojres/js/page.js"></script>
+<script type="text/javascript" src="https://www.maxuetang.cn/lxojres/js/common.js"></script>
+<style type="text/css">
+body{
+	background-color:#f7f7f9;
+	font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue", "Noto Sans CJK SC", "Noto Sans CJK", "Source Han Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+	font-size: 16px;
+	line-height: 1.5;
+	color: rgba(0, 0, 0, .85);
+}
+.container{
+	background-color:#fff;
+}
+.problem-bar,h2{
+	padding:15px;
+}
+h2{
+	padding:15px 15px 15px 0;
+}
+.problem-desc{
+	position:relative;
+	padding:15px 0px 5px 55px;
+	border-bottom:1px solid #ddd;
+}
+.problem-order{
+	position:absolute;
+	top:15px;
+	left:15px;
+	display:inline-block;
+	width:30px;
+	text-align:right;
+	overflow:hidden;
+}
+.problem-option label{
+	display:block;
+	margin-right:15px;
+	font-weight:400;
+	cursor:pointer;
+	position:relative;
+	padding:0 0 0 40px;
+}
+.problem-option label .key-box{
+	display:inline-block;
+	position:absolute;
+	top:0;
+	left:0;
+}
+.problem-ans{
+	color:#666;
+	font-size:0.9em;
+}
+.solve-box span{
+	font-size:14px;
+	color:#333;
+	display:inline-block;
+	margin-left:15px;
+}
+.fill-out-ipt{
+	border:0;
+	border-bottom:1px solid #000;
+	width:150px;
+}
+.win-box{
+	min-height: 100vh;
+	background-color:#fff;
+}
+</style>
+</head>
+<body>
+<div class="container win-box">
+<h2>填空题</h2>
+<div class="problem-box">
+
+</div>
+<div class="nav-footer"></div>
+</div>
+<script type="text/javascript">
+$(function(){
+	var convertFillOutHtml=(h,pid)=>{
+		var patt1 = /@@\{(.+?)\}\(([0-9]+\.{0,1}[0-9]{0,2})\)+/g;
+		var patt2 = /@@\{(.+?)\}\(([0-9]+\.{0,1}[0-9]{0,2})\)/;
+		var mm = h.match(patt1);
+		var ans = [];
+		for(var i=0;i<mm.length;i++){
+			var jj = mm[i].match(patt2);
+			ans.push("("+(i+1)+")"+jj[1]);
+			h = h.replace("@@{"+jj[1]+"}("+jj[2]+")","<input data-id='"+pid+"' class='fill-out-ipt' type='text' value=''/><span>("+jj[2]+"分)</span>");
+		}
+		return {html:h,ok:ans.join(";")+";"};
+	}
+	var replaceSpec=(s)=>{
+		return s.replace(new RegExp("\"","g"),"\\\"");
+	}
+	var loadProblems=(start)=>{
+		$.post("loadProblems",{ptype:4,start:start},function(js){
+			if(!js.success){
+				$(".problem-box").html("查询失败了")
+				return;
+			}
+			var data = js.data;
+			var ht = [];
+			ht.push("<div class='problem-bar bg-success'>当前第"+(parseInt(data.start)+1)+"页，共"+data.rows+"个题目</div>");
+			var limit = parseInt(data.limit);
+			$.each(data.list,function(e){
+				var o = this;
+				ht.push("<div class='problem-desc'>");
+				var j = convertFillOutHtml(o["desc"], o["pid"]);
+				ht.push("<b class='problem-order'>"+(start * limit + e + 1)+".</b> <div class='jdc-latex-show choose'>"+j["html"]+"</div>");
+				ht.push("<div class='problem-option'>");
+				ht.push("<div class='solve-box'><button autocomplete='off' data-loading-text='判题中，请稍候...' class='btn btn-warning btn-sm btn-solve' data-id='"+o["pid"]+"'>提交答案</button><span></span></div>");
+				ht.push("<div class='problem-ans'>答案："+j["ok"]+"<br>难度："+o["diff"]+"，教师："+o["teacher"]+"</div>");
+				ht.push("</div>");
+				ht.push("</div>");
+			});
+			$(".problem-box").html(ht.join(""));
+			var page = createPageNav(parseInt(data.start)+1, parseInt(data.limit), parseInt(data.rows), "{page}");
+			
+			if(page["pageCount"]>1){
+				$(".nav-footer").html('<div class="pager-foot"><ul class="pagination pull-right">'+page["pageLi"]+'</ul></div>');
+				$(".nav-footer [data-tag='nav']").click(function(){
+					loadProblems(parseInt($(this).attr("data-href")));
+				});
+			}else{
+				$(".nav-footer").html("");
+			}
+			setSolve();
+		},"json");
+	}
+	var setSolve=()=>{
+		$(".btn-solve").click(function(){
+			var btn = $(this);
+			var pid = btn.attr("data-id");
+			var ans = $("input[data-id='"+pid+"']");
+			var n = [];
+			$.each(ans,function(e){
+				n.push("\""+(e+1)+"\":\""+replaceSpec($(this).val())+"\"");
+			});
+			var rs = {"0":"未判","1":"待重判","2":"正在编译","3":"正在判题中","4":"答案正确","5":"输出格式错误","6":"答案错误","7":"运行超时","8":"内存超限","9":"输出超限","10":"运行错误","11":"编译错误","12":"编译成功","20":"部分正确"};
+			var data={ptype:4, pid: pid, ans:"{"+n.join(",")+"}"};
+			btn.button("loading");
+			$.post("solveProblem",data,function(js){
+				btn.button("reset");
+				if(!js.success){
+					btn.parent().find("span").html(js.msg);
+				}else{
+					btn.parent().find("span").html("判题结果："+rs[js.data.result]+"，得分："+js.data.score);
+				}
+			},"json");
+			
+		});
+	}
+	loadProblems(0);
+});
+</script>
+</body>
+</html>
