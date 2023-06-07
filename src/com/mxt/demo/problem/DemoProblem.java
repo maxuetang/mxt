@@ -21,7 +21,7 @@ public class DemoProblem {
 		params.put("merchant_id", 	MxtApiConfig.MERCHANT_ID);
 		params.put("email", 		MxtApiConfig.TEACHER_EMAIL);//机构下的码学堂教师账号
 		params.put("timestamp", 	System.currentTimeMillis());
-		params.put("ptype", 		7);//题目类型,必须
+		params.put("ptype", 		7);//题目类型, 必须
 		params.put("kp_ids", 		"3713,3714");//知识点ID,对应“节”,多个知识点用英文","分割,必须
 		params.put("difficulty", 	1);//题目难度,{1,2,3,4,5},可选
 		params.put("score", 		2.0);//题目分数,必须
